@@ -1,31 +1,47 @@
-import sqlalchemy
+import sqlalchemy as sa
+from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.ext.declarative import declarative_base
+import json
+#create table
+engine = sa.create_engine('sqlite:///test.db', echo=True)
+Base = declarative_base()
+conn = engine.connect()
 
-meta = sqlalchemy.MetaData()
+class Build(Base):
+    __tablename__ = 'build'
+    id = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.String, nullable=False)
+    description = sa.Column(sa.String(200), nullable=False)
+    version = sa.Column(sa.Integer, nullable=False)
+    url = sa.Column(sa.String(200), nullable=False)
+    owner = sa.Column(sa.String(200), nullable=False)
 
-build = sqlalchemy.Table(
-    'question', meta,
-    sqlalchemy.Column('name', sqlalchemy.String(200), nullable=False),
-    sqlalchemy.Column('description', sqlalchemy.String(200), nullable=False),
-    sqlalchemy.Column('version', sqlalchemy.Integer, nullable=False),
-    sqlalchemy.Column('url', sqlalchemy.String(200), nullable=False),
-    sqlalchemy.Column('owner', sqlalchemy.String(200), nullable=False),
+Build.metadata.create_all(engine)
 
-    # Indexes #
-    sqlalchemy.PrimaryKeyConstraint('id', name='build_id_pkey'))
+#create new connection to db
+Session = sessionmaker(bind=engine)
+session = Session()
+#session = scoped_session(Session)
 
-async def init_pg(app):
-    conf = app['config']['sqlite']
-    engine = await aiopg.sqlalchemy.create_engine(
-        database=conf['database'],
-        user=conf['user'],
-        password=conf['password'],
-        host=conf['host'],
-        port=conf['port'],
-        minsize=conf['minsize'],
-        maxsize=conf['maxsize'],
-        loop=app.loop)
-    app['db'] = engine
 
-async def close_pg(app):
-    app['db'].close()
-    await app['db'].wait_closed()
+def select_all():
+    res = conn.execute(sa.select([Build]))
+    # return all rows as a JSON array of objects
+    return json.dumps([dict(r) for r in res])
+
+def select_by_id(data):
+    select_st = sa.select([Build]).where(Build.id == data)
+    res = conn.execute(select_st)
+    for _row in res:
+        return json.dumps([dict(_row)])
+
+    #query = session.query(Build).filter(Build.id == data)
+    #for _row in query.all():
+    #    return _row
+
+def incert(data):
+    row = Build(name=data['name'], description=data['description'], version=data['version'], url=data['url'], owner=data['owner'])
+    session.add(row)
+    session.commit()
+#write to base
+#session.commit()

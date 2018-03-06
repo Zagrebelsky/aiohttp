@@ -1,14 +1,11 @@
 from aiohttp import web
-#from handlers import setup_routes
+# from handlers import setup_routes
 from service import BuildService
-#app.on_startup.append(session)
 
-
-
+# app.on_startup.append(session)
 
 app = web.Application()
 app.router.add_get('/api/get', BuildService.get_all)
-#app.router.add_post('/api/get/id', BuildService.get_all)
 app.router.add_get('/api/get/id', BuildService.get_by_id)
 app.router.add_post('/api/post/create', BuildService.create)
 app.router.add_post('/api/post/update', BuildService.update)

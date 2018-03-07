@@ -1,12 +1,10 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import json
 
 # create table
 engine = sa.create_engine('sqlite:///test.db', echo=True)
 Base = declarative_base()
-conn = engine.connect()
 
 
 class Build(Base):
@@ -24,14 +22,11 @@ Build.metadata.create_all(engine)
 # create new connection to db
 Session = sessionmaker(bind=engine)
 session = Session()
-
-
-# session = scoped_session(Session)
+conn = engine.connect()
 
 
 def select_all():
     res = conn.execute(sa.select([Build]))
-    # return all rows as a JSON array of objects
     return [dict(r) for r in res]
 
 
@@ -50,9 +45,14 @@ def insert(data):
 
 
 def update(data):
-    # Needs to disassemble data as dict to val and key and replace
-    row = session.query(Build).filter(Build.key == data).first()
+    # Disassemble data as dict to val and key and replace
+    row = session.query(Build).filter(Build.id == data['id']).first()
+    for i in data:
+        exec("row.%s = '%s'" % (i, data[i]))
     session.commit()
 
-# write to base
-# session.commit()
+
+def delete(data):
+    del_row = session.query(Build).filter(Build.id == data['id'])
+    del_row.delete()
+    session.commit()

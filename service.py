@@ -4,10 +4,9 @@ import db
 
 
 class BuildService:
-    async def get_all(request):
+    async def get_all(self):
         try:
             response_obj = {'status': db.select_all()}
-            # здесь выдаем из базы
             print('Get all builds ', db.select_all())
             return web.Response(text=json.dumps(response_obj), content_type='application/json', status=200)
         except Exception as e:
@@ -16,11 +15,10 @@ class BuildService:
             #  return failed with a status code of 500 i.e. 'Server Error'
             return web.Response(text=response_obj, status=500)
 
-    async def get_by_id(request):
+    async def get_by_id(self):
         try:
-            request_id = request.query['id']
+            request_id = self.query['id']
             response_obj = {'status': db.select_by_id(request_id)}
-            # здесь выдаем из базы
             print('Get all by id ', db.select_by_id(request_id))
             return web.Response(text=json.dumps(response_obj), content_type='application/json', status=200)
         except Exception as e:
@@ -29,14 +27,12 @@ class BuildService:
             #  return failed with a status code of 500 i.e. 'Server Error'
             return web.Response(text=json.dumps(response_obj), status=500)
 
-    async def create(request):
+    async def create(self):
         try:
-            build_request = await request.json()
+            build_request = await self.json()
             db.insert(build_request)
             print('Creating new build: ', build_request )
-            response_obj = {'status': 'added'}
-            # Здесь пишем в базу
-            # return a success json response with status code 200 i.e. 'OK'
+            response_obj = {'status': 'created'}
             return web.Response(text=json.dumps(response_obj), status=200)
         except Exception as e:
             # Bad path where create is not set
@@ -44,13 +40,25 @@ class BuildService:
             # return failed with a status code of 500 i.e. 'Server Error'
             return web.Response(text=json.dumps(response_obj), status=500)
 
-    async def update(request):
+    async def update(self):
         try:
-            build_request = await request.json()
-            db.insert(build_request)
+            build_request = await self.json()
+            db.update(build_request)
             print('Creating new build: ', build_request)
             response_obj = {'status': 'added'}
-            #  return a success json response with status code 200 i.e. 'OK'
+            return web.Response(text=json.dumps(response_obj), content_type='application/json', status=200)
+        except Exception as e:
+            #  Bad path where create is not set
+            response_obj = {'status': 'failed', 'reason': str(e)}
+            #  return failed with a status code of 500 i.e. 'Server Error'
+            return web.Response(text=json.dumps(response_obj), status=500)
+
+    async def delete(self):
+        try:
+            build_request = await self.json()
+            db.delete(build_request)
+            print('Deleted: ', build_request)
+            response_obj = {'status': 'deleted'}
             return web.Response(text=json.dumps(response_obj), content_type='application/json', status=200)
         except Exception as e:
             #  Bad path where create is not set
